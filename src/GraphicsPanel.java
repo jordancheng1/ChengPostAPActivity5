@@ -12,6 +12,7 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
     private Player player;
     private boolean[] pressedKeys;
     private ArrayList<Coin> coins;
+    private ArrayList<SpikedBall> spikedBalls;
     private Timer timer;
     private int time;
     private JButton resetButton;
@@ -27,6 +28,7 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
         }
         player = new Player("src/marioleft.png", "src/marioright.png", name);
         coins = new ArrayList<>();
+        spikedBalls = new ArrayList<>();
         pressedKeys = new boolean[128];
         time = 0;
         timer = new Timer(1000, this); // this Timer will call the actionPerformed interface method every 1000ms = 1 second
@@ -72,7 +74,6 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
             player.setPlayerImageRight("src/marioright.png");
             player.setPlayerImageLeft("src/marioleft.png");
             stageTwo = false;
-            coins.clear();
         }
 
 //         this loop does two things:  it draws each Coin that gets placed with mouse clicks,
@@ -89,9 +90,27 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
             }
         }
 
+        for (int j = 0; j < spikedBalls.size(); j++) {
+            SpikedBall spikedBall = spikedBalls.get(j);
+            g.drawImage(spikedBall.getImage(), spikedBall.getxCoord(), spikedBall.getyCoord(), null);
+            if (player.playerRect().intersects(spikedBall.spikedBallRect())) {
+                gamePaused = true;
+                g.setFont(new Font("Courier New", Font.BOLD, 108));
+                g.setColor(Color.RED);
+                g.drawString("GAME OVER!", 150, 290);
+            }
+        }
+
+        if (player.getScore() == 20) {
+            gamePaused = true;
+            g.setFont(new Font("Courier New", Font.BOLD, 108));
+            g.setColor(Color.GREEN);
+            g.drawString("YOU WIN!", 220, 290);
+        }
 
         // draw score
         g.setFont(new Font("Courier New", Font.BOLD, 24));
+        g.setColor(Color.BLACK);
         g.drawString(player.getName() + "'s Score: " + player.getScore(), 20, 40);
         g.drawString("Time: " + time, 20, 70);
         resetButton.setLocation(20, 80);
@@ -143,9 +162,16 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
 
     public void mouseReleased(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1 && !gamePaused) {  // left mouse click
-            Point mouseClickLocation = e.getPoint();
-            Coin coin = new Coin(mouseClickLocation.x, mouseClickLocation.y);
-            coins.add(coin);
+            int random = (int) (Math.random() * 4) + 1;
+            if (random == 1) {
+                Point mouseClickLocation = e.getPoint();
+                SpikedBall spikedBall = new SpikedBall(mouseClickLocation.x, mouseClickLocation.y);
+                spikedBalls.add(spikedBall);
+            } else {
+                Point mouseClickLocation = e.getPoint();
+                Coin coin = new Coin(mouseClickLocation.x, mouseClickLocation.y);
+                coins.add(coin);
+            }
         } else if (!gamePaused) {
             Point mouseClickLocation = e.getPoint();
             if (player.playerRect().contains(mouseClickLocation)) {
@@ -167,6 +193,8 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
             player.setScore(0);
             player.setxCoord(50);
             player.setyCoord(435);
+            coins.clear();
+            spikedBalls.clear();
             time = 0;
             if (gamePaused) {
                 gamePaused = false;
